@@ -1,7 +1,9 @@
 import random
 import pygame
+import os
 import sys
 from pygame.locals import *
+
 
 # Pendientes
 # agregar nave como sprite para permitir colisiones y hacer respectivo if para que se depositen unidades
@@ -50,25 +52,24 @@ reactive = False
 collaborative = False
 
 # load images
-bg = pygame.image.load(
-    'C:\\Users\\alexd\\Documents\\GitHub\\Mars\\imgs\\background.png')
+bg = pygame.image.load('imgs/background.png')
 bg_img = pygame.transform.scale(bg, (1000, 600))
 player_img = pygame.image.load(
-    "C:\\Users\\alexd\\Documents\\GitHub\\Mars\\imgs\\robot.png")
+    "imgs/robot.png")
 spaceship_img = pygame.image.load(
-    'C:\\Users\\alexd\\Documents\\GitHub\\Mars\\imgs\\spaceship.png')
+    'imgs/spaceship.png')
 reactive_img = pygame.image.load(
-    "C:\\Users\\alexd\\Documents\\GitHub\\Mars\\imgs\\reactive_btn.png")
+    "imgs/reactive_btn.png")
 collaborative_img = pygame.image.load(
-    "C:\\Users\\alexd\\Documents\\GitHub\\Mars\\imgs\\collaborative_btn.png")
+    "imgs/collaborative_btn.png")
 exit_img = pygame.image.load(
-    "C:\\Users\\alexd\\Documents\\GitHub\\Mars\\imgs\\exit_btn.png")
+    "imgs/exit_btn.png")
 unit_img = pygame.image.load(
-    'C:\\Users\\alexd\\Documents\\GitHub\\Mars\\imgs\\unit.png')
+    'imgs/unit.png')
 wall_img = pygame.image.load(
-    "C:\\Users\\alexd\\Documents\\GitHub\\Mars\\imgs\\wall.png")
+    "imgs/wall.png")
 stone_img = pygame.image.load(
-    'C:\\Users\\alexd\\Documents\\GitHub\\Mars\\imgs\\stone.png')
+    'imgs/stone.png')
 
 
 def draw_text(text, font, text_col, x, y):
@@ -218,6 +219,8 @@ class Player():
                   font_score, white, tile_size + 700, 400)
         return stop
 
+
+
     def updatee(self):
         selec = random.randint(1, 4)
         unitsize = random.randint(1, 4)
@@ -237,13 +240,13 @@ class Player():
         elif key[pygame.K_d]:
             dx += 10
         if selec == 1 and self.rect.y < 488:
-            dy += 5
+            dy += 1
         elif selec == 2 and self.rect.y > 30:
-            dy -= 5
+            dy -= 1
         elif selec == 3 and self.rect.x < 540:
-            dx += 5
+            dx += 1
         elif selec == 4 and self.rect.x > 24:
-            dx -= 5
+            dx -= 1
 
         # check for collisions
         for tile in world.tile_list:
@@ -254,10 +257,10 @@ class Player():
         # Check for player collision with unit
         unitsize = 2
 
-        # El robot esta libre
+        # Robot is free for navigating
         if self.hasunit == False and self.isreturning == False:
             # If player collides with unit
-            if pygame.sprite.spritecollide(self, unit_group, True):
+            if pygame.sprite.spritecollide(self, unit_group, False):
                 # OBTENER COORDENADAS DE X Y Y DE LA UNIDAD
                 unitx = self.rect.x
                 unity = self.rect.y
@@ -268,7 +271,6 @@ class Player():
                     self.isreturning = False
                 # SI LA UNIDAD ES MAS GRANDE QUE UNA
                 elif unitsize > 1:
-                    self.carrryingunit += 1
                     self.unitsleft = unitsize
                     self.hasunit = True
                     self.isreturning = True
@@ -293,33 +295,61 @@ class Player():
                 self.carrryingunit = 0
 
         # SI LA UNIDAD ES MAS GRANDE DE 1
-        # IMPLEMENTAR UN IF TAL VEZ FUNCIONE Y ADENTRO EL IF DE CHOQUE CON LA NAVE Y REGRESE
+        #UNIT IS BIGGER THAN ONE SO IT HAS UNIT AND ITS GOING TO RETURN
         elif self.hasunit == True and self.isreturning == True:
-            for i in range((unitsize)):
-                # VA HACIA LA NAVE
-                # BUSCA COORDENADAS DE LA NAVE
-                if (self.rect.x > spaceship_x):
-                    dx -= 5
+            #EXAMPLE 2 UNITSLEFT WOULD HAVE TO GO FIRST TO SPACESHIP, ONCE COLLIDED WITH SPACESHIP, GO TO UNITX AND UNITY AND THEN TO SPACESHIP AGAIN
+            if unitsize > 0:
+                if self.rect.x > spaceship_x:
+                    dx -= 1
                 else:
-                    dx += 5
+                    dx += 1
                 if (self.rect.y < spaceship_y):
-                    dy += 5
+                    dy += 1
                 else:
-                    dy -= 5
-                # NAVE ENCONTRADA Y HECHO COLISION
-                if pygame.sprite.spritecollide(self, spaceship_group, False):
+                    dy -= 1
+                if self.rect.x == spaceship_x and self.rect.y == spaceship_y:
                     if (self.rect.x > unitx):
-                        dx -= 5
+                        dx -= 1
                     else:
-                        dx += 5
+                        dx += 1
                     if (self.rect.y < unity):
-                        dy += 5
+                        dy += 1
                     else:
-                        dy -= 5
-                # UNA VEZ TERMINADO EL FOR SE QUEDA LIBRE
-                self.hasunit = False
+                        dy -= 1
+
+                    if pygame.sprite.spritecollide(self, unit_group, False):
+                        if (self.rect.x > spaceship_x):
+                            dx -= 1
+                        else:
+                            dx += 1
+                        if (self.rect.y < spaceship_y):
+                            dy += 1
+                        else:
+                            dy -= 1
+
+                        unitsize -= 1
+                    else:
+                        if (self.rect.x > unitx):
+                            dx -= 1
+                        else:
+                            dx += 1
+                        if (self.rect.y < unity):
+                            dy += 1
+                        else:
+                            dy -= 1
+
+            else:
                 self.isreturning = False
-                self.carrryingunit = 0
+                self.hasunit = False
+
+
+
+
+
+                # UNA VEZ TERMINADO EL FOR SE QUEDA LIBRE
+           # self.hasunit = False
+            #self.isreturning = False
+            #self.carrryingunit = 0
 
             # #MIENTRAS QUE LAS UNIDADES RESTANTES SEAN MAYORES O IGUALES AL NUMERO DE VUELTAS 
 
@@ -382,6 +412,7 @@ class Player():
         #           self.rect.y, unitsize, unitx, unity, self.unitsleft, self.hasunit, self.isreturning)
         print(self.rect.x, self.rect.y, unitx, unity, self.hasunit, self.isreturning, self.carrryingunit,
               self.unitsleft)
+
 
         # draw player onto screens
         screen.blit(self.image, self.rect)
